@@ -2,12 +2,13 @@
 Core installation logic — the parts that actually do the work.
 """
 
+import ctypes
 import os
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import httpx
 from rich.console import Console
@@ -36,9 +37,7 @@ class FirefoxInstaller:
 
         self.console.print(f"[cyan]>[/cyan] {description}")
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return result
         except subprocess.CalledProcessError as e:
             self.console.print(f"[red][X][/red] {description} failed")
@@ -47,12 +46,11 @@ class FirefoxInstaller:
 
     def check_root(self) -> bool:
         """Check if we're running as root/admin."""
-        if hasattr(os, 'geteuid'):
-            return os.geteuid() == 0
+        if hasattr(os, "geteuid"):
+            return bool(os.geteuid() == 0)
         # Windows: check if running as admin
         try:
-            import ctypes
-            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+            return bool(ctypes.windll.shell32.IsUserAnAdmin() != 0)
         except Exception:
             return False
 
@@ -71,7 +69,9 @@ class FirefoxInstaller:
                 shutil.rmtree(INSTALL_DIR, ignore_errors=True)
                 self.console.print(f"[green][OK][/green] Removed {INSTALL_DIR}")
 
-    def download_firefox(self, progress_callback=None) -> Path:
+    def download_firefox(
+        self, progress_callback: Optional[Callable[[int, int], None]] = None
+    ) -> Path:
         """Download the latest Firefox tarball."""
         with tempfile.NamedTemporaryFile(suffix=".tar.xz", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -94,7 +94,9 @@ class FirefoxInstaller:
                     if progress_callback and total > 0:
                         progress_callback(downloaded, total)
 
-        self.console.print(f"[green][OK][/green] Downloaded {tmp_path.stat().st_size / 1024 / 1024:.1f} MB")
+        self.console.print(
+            f"[green][OK][/green] Downloaded {tmp_path.stat().st_size / 1024 / 1024:.1f} MB"
+        )
         return tmp_path
 
     def extract_firefox(self, tarball: Path) -> None:
@@ -122,7 +124,9 @@ class FirefoxInstaller:
     def create_symlink(self) -> None:
         """Create /usr/bin/firefox symlink."""
         if self.dry_run:
-            self.console.print(f"[dim]DRY RUN:[/dim] Would create symlink {SYMLINK_PATH} -> {INSTALL_DIR}/firefox")
+            self.console.print(
+                f"[dim]DRY RUN:[/dim] Would create symlink {SYMLINK_PATH} -> {INSTALL_DIR}/firefox"
+            )
             return
 
         self._run(
@@ -157,7 +161,9 @@ Exec={INSTALL_DIR}/firefox --private-window
 """
 
         if self.dry_run:
-            self.console.print(f"[dim]DRY RUN:[/dim] Would write desktop entry to {DESKTOP_ENTRY_PATH}")
+            self.console.print(
+                f"[dim]DRY RUN:[/dim] Would write desktop entry to {DESKTOP_ENTRY_PATH}"
+            )
             return
 
         self.console.print("[cyan]>[/cyan] Creating desktop entry...")
@@ -184,7 +190,7 @@ Exec={INSTALL_DIR}/firefox --private-window
         except subprocess.CalledProcessError:
             return None
 
-    def install(self, progress_callback=None) -> str:
+    def install(self, progress_callback: Optional[Callable[[int, int], None]] = None) -> str:
         """Run the full installation process."""
         self.console.print("\n[bold blue]firefox-rebuild[/bold blue] — Installing Firefox\n")
 

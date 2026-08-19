@@ -4,7 +4,9 @@ import sys
 from unittest.mock import Mock, patch
 
 import pytest
+from typer.testing import CliRunner
 
+from firefox_rebuild.cli import app
 from firefox_rebuild.installer import FirefoxInstaller
 
 
@@ -62,31 +64,19 @@ class TestCLI:
 
     def test_version_command(self):
         """Version command exists."""
-        from typer.testing import CliRunner
-
-        from firefox_rebuild.cli import app
-
         runner = CliRunner()
         result = runner.invoke(app, ["version"])
         assert result.exit_code == 0
 
     def test_install_help(self):
         """Install command shows help."""
-        from typer.testing import CliRunner
-
-        from firefox_rebuild.cli import app
-
         runner = CliRunner()
         result = runner.invoke(app, ["install", "--help"])
         assert result.exit_code == 0
-        assert "install" in result.output.lower()
+        assert "install" in result.output
 
     def test_status_command(self):
         """Status command works."""
-        from typer.testing import CliRunner
-
-        from firefox_rebuild.cli import app
-
         runner = CliRunner()
         result = runner.invoke(app, ["status"])
         assert result.exit_code == 0

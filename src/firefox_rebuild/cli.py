@@ -2,11 +2,15 @@
 CLI interface — the friendly face of firefox-rebuild.
 """
 
+import ctypes
 import os
 import shutil
 import subprocess
+import traceback
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Optional
 
 import typer
 from rich.console import Console
@@ -16,6 +20,7 @@ from rich.progress import (
     DownloadColumn,
     Progress,
     SpinnerColumn,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeRemainingColumn,
@@ -64,21 +69,22 @@ SUCCESS_BANNER = r"""
 """
 
 
-def print_banner():
+def print_banner() -> None:
     console.print(BANNER, style="bold cyan")
 
 
-def print_success(version: str):
+def print_success(version: str) -> None:
     console.print(SUCCESS_BANNER, style="bold green")
     console.print(f"\n[bold]Firefox {version}[/bold] is ready to go [green](fox)[/green]\n")
 
 
 # ── Progress helpers ──────────────────────────────────────────────────
 
+
 class DownloadProgress:
     """A nice download progress bar with speed and ETA."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.progress = Progress(
             SpinnerColumn("dots", style="cyan"),
             TextColumn("[bold]{task.description}"),
@@ -93,26 +99,26 @@ class DownloadProgress:
             console=console,
             transient=True,
         )
-        self.task_id = None
-        self._live = None
+        self.task_id: Optional[TaskID] = None
+        self._live: Optional[Live] = None
 
-    def start(self, description: str = "Downloading Firefox"):
+    def start(self, description: str = "Downloading Firefox") -> None:
         self.task_id = self.progress.add_task(description, total=100)
         self._live = Live(self.progress, console=console, refresh_per_second=10)
         self._live.start()
 
-    def update(self, downloaded: int, total: int):
+    def update(self, downloaded: int, total: int) -> None:
         if self.task_id is not None and total > 0:
             self.progress.update(self.task_id, completed=downloaded, total=total)
 
-    def finish(self):
+    def finish(self) -> None:
         if self._live:
             self._live.stop()
             self._live = None
 
 
 @contextmanager
-def spinner(message: str):
+def spinner(message: str) -> Iterator[None]:
     """A simple spinner context manager."""
     spin = Spinner("dots", text=f"[cyan]{message}[/cyan]")
     live = Live(spin, console=console, refresh_per_second=10)
@@ -125,18 +131,15 @@ def spinner(message: str):
 
 # ── Commands ──────────────────────────────────────────────────────────
 
+
 @app.command()
 def install(
     dry_run: bool = typer.Option(
         False, "--dry-run", "-n", help="Show what would happen without making changes"
     ),
-    yes: bool = typer.Option(
-        False, "--yes", "-y", help="Skip confirmation prompt"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Show detailed output"
-    ),
-):
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed output"),
+) -> None:
     """
     Install or update Firefox to the latest version.
 
@@ -168,7 +171,7 @@ def install(
     # Progress tracking
     download_progress = DownloadProgress()
 
-    def progress_callback(downloaded: int, total: int):
+    def progress_callback(downloaded: int, total: int) -> None:
         download_progress.update(downloaded, total)
 
     try:
@@ -193,25 +196,30 @@ def install(
         console.print(table)
 
         if not dry_run:
-            console.print("\n[dim]Tip:[/dim] Run [bold]firefox[/bold] from terminal or find it in your app menu.")
-            console.print("[dim]Note:[/dim] This Firefox updates itself automatically. Run this tool again when you want the very latest build.\n")
+            console.print(
+                "\n[dim]Tip:[/dim] Run [bold]firefox[/bold] from terminal or "
+                "find it in your app menu."
+            )
+            console.print(
+                "[dim]Note:[/dim] This Firefox updates itself automatically. "
+                "Run this tool again when you want the very latest build.\n"
+            )
 
     except PermissionError:
         console.print("\n[red]Need root privileges. Try:[/red]")
         console.print("  [bold]sudo firefox-rebuild install[/bold]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:
         if not dry_run:
             download_progress.finish()
         console.print(f"\n[red]Installation failed:[/red] {e}")
         if verbose:
-            import traceback
             console.print(traceback.format_exc())
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @app.command()
-def version():
+def version() -> None:
     """Show the installed Firefox version."""
     print_banner()
 
@@ -237,6 +245,7 @@ def version():
             ["firefox", "--version"],
             capture_output=True,
             text=True,
+            check=False,
         )
         if result.returncode == 0:
             console.print(f"[dim]System firefox:[/dim] {result.stdout.strip()}")
@@ -247,7 +256,7 @@ def version():
 @app.command()
 def uninstall(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation"),
-):
+) -> None:
     """Remove the manually installed Firefox."""
     print_banner()
 
@@ -259,11 +268,10 @@ def uninstall(
 
     # Check root/admin
     is_admin = False
-    if hasattr(os, 'geteuid'):
+    if hasattr(os, "geteuid"):
         is_admin = os.geteuid() == 0
     else:
         try:
-            import ctypes
             is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
         except Exception:
             pass
@@ -296,7 +304,7 @@ def uninstall(
 
 
 @app.command()
-def status():
+def status() -> None:
     """Check Firefox installation status."""
     print_banner()
 
@@ -317,7 +325,11 @@ def status():
             )
             table.add_row("/opt/firefox", "[green][OK] Installed[/green]", result.stdout.strip())
         except subprocess.CalledProcessError:
-            table.add_row("/opt/firefox", "[yellow][!] Present but broken[/yellow]", "Binary exists but --version failed")
+            table.add_row(
+                "/opt/firefox",
+                "[yellow][!] Present but broken[/yellow]",
+                "Binary exists but --version failed",
+            )
     else:
         table.add_row("/opt/firefox", "[red][X] Not found[/red]", "")
 
@@ -345,9 +357,14 @@ def status():
             ["dpkg", "-l", "firefox"],
             capture_output=True,
             text=True,
+            check=False,
         )
         if "ii  firefox" in result.stdout:
-            table.add_row("System package (apt)", "[yellow][!] Installed[/yellow]", "Consider removing with apt")
+            table.add_row(
+                "System package (apt)",
+                "[yellow][!] Installed[/yellow]",
+                "Consider removing with apt",
+            )
         else:
             table.add_row("System package (apt)", "[green][OK] Not installed[/green]", "")
     except FileNotFoundError:
