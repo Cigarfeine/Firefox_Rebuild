@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[FEAT] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe what you'd like to see.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Use Case
+      description: What problem would this solve? Why is it needed?
+      placeholder: "It would be useful to..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How should this work? Any implementation ideas?
+      placeholder: "Add a `--channel` flag to choose stable/beta/nightly..."
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any other approaches you've thought of?
+      placeholder: "Could also use a config file..."
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I've searched existing issues/discussions
+          required: true

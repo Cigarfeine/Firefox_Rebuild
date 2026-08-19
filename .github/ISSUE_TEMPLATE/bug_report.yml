@@ -1,0 +1,60 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect?
+      placeholder: "When I run `firefox-rebuild install`, it fails with..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Run `firefox-rebuild install --dry-run`
+        2. Observe error...
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS/distro are you on?
+      placeholder: "Ubuntu 22.04 / Debian 12 / etc."
+    validations:
+      required: true
+  - type: input
+    id: python_version
+    attributes:
+      label: Python Version
+      description: Output of `python --version`
+      placeholder: "3.11.9"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Output / Logs
+      description: Paste any error messages or tracebacks
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I've searched existing issues
+          required: true
+        - label: I've tried the latest version
+          required: true
