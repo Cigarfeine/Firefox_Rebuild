@@ -2,18 +2,15 @@
 CLI interface — the friendly face of firefox-rebuild.
 """
 
-import subprocess
-import shutil
 import os
-import time
+import shutil
+import subprocess
 from contextlib import contextmanager
-from typing import Optional
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.live import Live
-from rich.panel import Panel
 from rich.progress import (
     BarColumn,
     DownloadColumn,
@@ -26,7 +23,6 @@ from rich.progress import (
 )
 from rich.spinner import Spinner
 from rich.table import Table
-from rich.text import Text
 
 from .installer import FirefoxInstaller
 
@@ -42,7 +38,7 @@ console = Console()
 
 # ── Visual flair ──────────────────────────────────────────────────────
 
-BANNER = """
+BANNER = r"""
 +--------------------------------------------------------------+
 |                                                              |
 |    ___ _            _     _ _  ___ _   _ ____                |
@@ -55,7 +51,7 @@ BANNER = """
 +--------------------------------------------------------------+
 """
 
-SUCCESS_BANNER = """
+SUCCESS_BANNER = r"""
 +--------------------------------------------------------------+
 |                                                              |
 |     ____  _   _ ____    ___ ____ ____  ____                  |
@@ -293,7 +289,7 @@ def uninstall(
     desktop = Path("/usr/share/applications/firefox.desktop")
     if desktop.exists():
         desktop.unlink()
-        console.print(f"[green][OK][/green] Removed desktop entry")
+        console.print("[green][OK][/green] Removed desktop entry")
 
     console.print("\n[green]Done.[/green] Firefox has been removed.")
     console.print("[dim]Note:[/dim] System package (apt firefox) was not touched.")

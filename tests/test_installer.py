@@ -1,7 +1,6 @@
 """Tests for firefox-rebuild."""
 
 import sys
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -63,8 +62,9 @@ class TestCLI:
 
     def test_version_command(self):
         """Version command exists."""
-        from firefox_rebuild.cli import app
         from typer.testing import CliRunner
+
+        from firefox_rebuild.cli import app
 
         runner = CliRunner()
         result = runner.invoke(app, ["version"])
@@ -72,8 +72,9 @@ class TestCLI:
 
     def test_install_help(self):
         """Install command shows help."""
-        from firefox_rebuild.cli import app
         from typer.testing import CliRunner
+
+        from firefox_rebuild.cli import app
 
         runner = CliRunner()
         result = runner.invoke(app, ["install", "--help"])
@@ -82,8 +83,9 @@ class TestCLI:
 
     def test_status_command(self):
         """Status command works."""
-        from firefox_rebuild.cli import app
         from typer.testing import CliRunner
+
+        from firefox_rebuild.cli import app
 
         runner = CliRunner()
         result = runner.invoke(app, ["status"])

@@ -129,7 +129,7 @@ class FirefoxInstaller:
             ["ln", "-sf", str(INSTALL_DIR / "firefox"), str(SYMLINK_PATH)],
             f"Creating symlink {SYMLINK_PATH}",
         )
-        self.console.print(f"[green][OK][/green] Symlink created")
+        self.console.print("[green][OK][/green] Symlink created")
 
     def create_desktop_entry(self) -> None:
         """Create .desktop file for application menu."""
@@ -162,7 +162,7 @@ Exec={INSTALL_DIR}/firefox --private-window
 
         self.console.print("[cyan]>[/cyan] Creating desktop entry...")
         DESKTOP_ENTRY_PATH.write_text(desktop_content)
-        self.console.print(f"[green][OK][/green] Desktop entry created")
+        self.console.print("[green][OK][/green] Desktop entry created")
 
     def verify_installation(self) -> Optional[str]:
         """Verify Firefox was installed correctly and return version."""
