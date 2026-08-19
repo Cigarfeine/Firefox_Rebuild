@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/firefox_rebuild/__init__.py
+src/firefox_rebuild/cli.py
+src/firefox_rebuild/installer.py
+src/firefox_rebuild.egg-info/PKG-INFO
+src/firefox_rebuild.egg-info/SOURCES.txt
+src/firefox_rebuild.egg-info/dependency_links.txt
+src/firefox_rebuild.egg-info/entry_points.txt
+src/firefox_rebuild.egg-info/requires.txt
+src/firefox_rebuild.egg-info/top_level.txt
+tests/test_installer.py

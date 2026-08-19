@@ -1,0 +1,2 @@
+[console_scripts]
+firefox-rebuild = firefox_rebuild.cli:app
