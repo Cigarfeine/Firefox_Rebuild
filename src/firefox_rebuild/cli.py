@@ -78,9 +78,7 @@ def print_table(rows: list[tuple[str, str, str]], headers: Optional[list[str]] =
             col_widths[idx] = max(col_widths[idx], len(clean_text))
 
     if headers:
-        header_line = "  ".join(
-            f"{headers[i]:<{col_widths[i]}}" for i in range(len(headers))
-        )
+        header_line = "  ".join(f"{headers[i]:<{col_widths[i]}}" for i in range(len(headers)))
         console.print(f"[bold cyan]{header_line}[/bold cyan]")
         console.print("[dim]" + "─" * (sum(col_widths) + (num_cols - 1) * 2) + "[/dim]")
 
@@ -209,12 +207,14 @@ def cmd_install(dry_run: bool = False, yes: bool = False, verbose: bool = False)
         print_success(version)
 
         console.print("[bold]Installation Summary:[/bold]")
-        print_table([
-            ("Install location", ":", "/opt/firefox"),
-            ("Command", ":", "firefox (via /usr/bin/firefox)"),
-            ("Desktop entry", ":", "/usr/share/applications/firefox.desktop"),
-            ("Version", ":", version),
-        ])
+        print_table(
+            [
+                ("Install location", ":", "/opt/firefox"),
+                ("Command", ":", "firefox (via /usr/bin/firefox)"),
+                ("Desktop entry", ":", "/usr/share/applications/firefox.desktop"),
+                ("Version", ":", version),
+            ]
+        )
 
         if not dry_run:
             console.print(
@@ -230,8 +230,7 @@ def cmd_install(dry_run: bool = False, yes: bool = False, verbose: bool = False)
     except PermissionError:
         console.print("\n[red]Need root privileges. Try:[/red]")
         console.print(
-            "  [bold]sudo firefox-rebuild install[/bold] "
-            "(or [bold]sudo ./install.sh[/bold])"
+            "  [bold]sudo firefox-rebuild install[/bold] (or [bold]sudo ./install.sh[/bold])"
         )
         return 1
     except Exception as e:
@@ -410,12 +409,8 @@ def build_parser() -> argparse.ArgumentParser:
     install_parser.add_argument(
         "--dry-run", "-n", action="store_true", help="Show what would happen without making changes"
     )
-    install_parser.add_argument(
-        "--yes", "-y", action="store_true", help="Skip confirmation prompt"
-    )
-    install_parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show detailed output"
-    )
+    install_parser.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
+    install_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed output")
 
     # version command
     subparsers.add_parser("version", help="Show installed Firefox version")
