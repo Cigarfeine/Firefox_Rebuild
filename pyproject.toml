@@ -35,12 +35,12 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = []
-urls = [
-    "Homepage = https://github.com/Cigarfeine/Firefox_Rebuild",
-    "Repository = https://github.com/Cigarfeine/Firefox_Rebuild",
-    "Issues = https://github.com/Cigarfeine/Firefox_Rebuild/issues",
-    "Changelog = https://github.com/Cigarfeine/Firefox_Rebuild/blob/main/CHANGELOG.md",
-]
+
+[project.urls]
+Homepage = "https://github.com/Cigarfeine/Firefox_Rebuild"
+Repository = "https://github.com/Cigarfeine/Firefox_Rebuild"
+Issues = "https://github.com/Cigarfeine/Firefox_Rebuild/issues"
+Changelog = "https://github.com/Cigarfeine/Firefox_Rebuild/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
