@@ -1,46 +1,44 @@
 """Tests for firefox-rebuild."""
 
+import io
 import sys
+import unittest
 from unittest.mock import Mock, patch
-
-import pytest
-from typer.testing import CliRunner
 
 from firefox_rebuild.cli import app
 from firefox_rebuild.installer import FirefoxInstaller
 
 
-class TestFirefoxInstaller:
+class TestFirefoxInstaller(unittest.TestCase):
     """Tests for the FirefoxInstaller class."""
 
     def test_check_root_on_windows(self):
         """check_root works on Windows (uses ctypes)."""
         installer = FirefoxInstaller()
-        # On Windows, should not crash and return a boolean
         result = installer.check_root()
-        assert isinstance(result, bool)
+        self.assertIsInstance(result, bool)
 
     def test_check_root_false_unix(self):
         """check_root returns False when not root on Unix."""
         if sys.platform == "win32":
-            pytest.skip("Unix-only test")
+            self.skipTest("Unix-only test")
         with patch("os.geteuid", return_value=1000):
             installer = FirefoxInstaller()
-            assert installer.check_root() is False
+            self.assertFalse(installer.check_root())
 
     def test_check_root_true_unix(self):
         """check_root returns True when root on Unix."""
         if sys.platform == "win32":
-            pytest.skip("Unix-only test")
+            self.skipTest("Unix-only test")
         with patch("os.geteuid", return_value=0):
             installer = FirefoxInstaller()
-            assert installer.check_root() is True
+            self.assertTrue(installer.check_root())
 
     def test_dry_run_mode(self):
         """Dry run mode doesn't execute commands."""
         installer = FirefoxInstaller(dry_run=True)
-        # Should not raise
-        installer._run(["echo", "test"], "Test command")
+        result = installer._run(["echo", "test"], "Test command")
+        self.assertEqual(result.returncode, 0)
 
     @patch("firefox_rebuild.installer.subprocess.run")
     def test_remove_old_firefox(self, mock_run):
@@ -48,36 +46,52 @@ class TestFirefoxInstaller:
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
         installer = FirefoxInstaller(dry_run=True)
         installer.remove_old_firefox()
-        # In dry-run mode, _run doesn't actually call subprocess.run
-        # Just verify it doesn't crash
-        assert True
+        self.assertTrue(True)
 
     def test_verify_installation_missing(self):
         """verify_installation returns None when Firefox not installed."""
         installer = FirefoxInstaller(dry_run=True)
         with patch("pathlib.Path.exists", return_value=False):
-            assert installer.verify_installation() is None
+            self.assertIsNone(installer.verify_installation())
 
 
-class TestCLI:
+class TestCLI(unittest.TestCase):
     """Basic CLI tests."""
 
     def test_version_command(self):
         """Version command exists."""
-        runner = CliRunner()
-        result = runner.invoke(app, ["version"])
-        assert result.exit_code == 0
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            exit_code = app(["version"])
+        self.assertEqual(exit_code, 0)
 
     def test_install_help(self):
         """Install command shows help."""
-        runner = CliRunner()
-        result = runner.invoke(app, ["install", "--help"])
-        assert result.exit_code == 0
-        assert "install" in result.output
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            try:
+                exit_code = app(["install", "--help"])
+            except SystemExit as e:
+                exit_code = e.code
+        self.assertEqual(exit_code, 0)
+        self.assertIn("install", captured.getvalue().lower())
 
     def test_status_command(self):
         """Status command works."""
-        runner = CliRunner()
-        result = runner.invoke(app, ["status"])
-        assert result.exit_code == 0
-        assert "Firefox Status" in result.output
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            exit_code = app(["status"])
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Firefox Status", captured.getvalue())
+
+    def test_dry_run_install(self):
+        """Install with --dry-run works without root."""
+        captured = io.StringIO()
+        with patch("sys.stdout", captured):
+            exit_code = app(["install", "--dry-run", "--yes"])
+        self.assertEqual(exit_code, 0)
+        self.assertIn("DRY RUN MODE", captured.getvalue())
+
+
+if __name__ == "__main__":
+    unittest.main()
