@@ -93,9 +93,12 @@ class FirefoxInstaller:
             return bool(os.geteuid() == 0)
         # Windows: check if running as admin
         try:
-            return bool(ctypes.windll.shell32.IsUserAnAdmin() != 0)
+            windll = getattr(ctypes, "windll", None)
+            if windll is not None:
+                return bool(windll.shell32.IsUserAnAdmin() != 0)
         except Exception:
             return False
+        return False
 
     def remove_old_firefox(self) -> None:
         """Remove any existing Firefox installations."""

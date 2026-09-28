@@ -295,7 +295,9 @@ def cmd_uninstall(yes: bool = False) -> int:
         is_admin = os.geteuid() == 0
     else:
         try:
-            is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+            windll = getattr(ctypes, "windll", None)
+            if windll is not None:
+                is_admin = bool(windll.shell32.IsUserAnAdmin() != 0)
         except Exception:
             pass
 
