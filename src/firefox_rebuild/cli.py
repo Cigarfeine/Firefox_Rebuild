@@ -18,6 +18,8 @@ from typing import Optional
 
 from .installer import Console, FirefoxInstaller, console
 
+REFRESH_INTERVAL = 0.1
+
 # ── Visual flair ──────────────────────────────────────────────────────
 
 BANNER = r"""
@@ -61,7 +63,8 @@ def print_table(rows: list[tuple[str, str, str]], headers: Optional[list[str]] =
     if not rows and not headers:
         return
 
-    all_data = ([tuple(headers)] if headers else []) + rows
+    all_data: list[tuple[str, ...]] = [tuple(headers)] if headers else []
+    all_data.extend(rows)
     num_cols = max(len(r) for r in all_data)
 
     col_widths = [0] * num_cols
@@ -69,7 +72,6 @@ def print_table(rows: list[tuple[str, str, str]], headers: Optional[list[str]] =
         for idx, col in enumerate(row):
             clean_text = Console()._format(str(col))
             # Strip ANSI escape codes when calculating column width
-            raw_len = len(clean_text)
             for tag in Console._TAGS.values():
                 clean_text = clean_text.replace(tag, "")
             clean_text = clean_text.replace(Console._RESET, "")
@@ -117,8 +119,8 @@ class DownloadProgress:
             return
 
         now = time.time()
-        # Limit update rate to 10 FPS
-        if now - self.last_update_time < 0.1 and downloaded < total:
+        # Limit update rate to avoid flickering
+        if now - self.last_update_time < REFRESH_INTERVAL and downloaded < total:
             return
         self.last_update_time = now
 
@@ -140,9 +142,12 @@ class DownloadProgress:
             rem_sec = int((self.total - downloaded) / speed_bps)
             eta_str = f"{rem_sec // 60:02d}:{rem_sec % 60:02d}"
 
-        sys.stdout.write(
-            f"\r\033[K[cyan]>[/cyan] {self.description}: [{bar}] {percent:5.1f}% • {downloaded_mb:.1f}/{total_mb:.1f} MB • {speed_mbps:.1f} MB/s • ETA {eta_str}"
+        line = (
+            f"\r\033[K[cyan]>[/cyan] {self.description}: [{bar}] "
+            f"{percent:5.1f}% • {downloaded_mb:.1f}/{total_mb:.1f} MB • "
+            f"{speed_mbps:.1f} MB/s • ETA {eta_str}"
         )
+        sys.stdout.write(line)
         sys.stdout.flush()
 
     def finish(self) -> None:
@@ -177,7 +182,8 @@ def cmd_install(dry_run: bool = False, yes: bool = False, verbose: bool = False)
 
     if not yes and not dry_run:
         try:
-            choice = input("This will replace your current Firefox. Continue? [Y/n]: ").strip().lower()
+            prompt = "This will replace your current Firefox. Continue? [Y/n]: "
+            choice = input(prompt).strip().lower()
             if choice in ("n", "no"):
                 console.print("[yellow]Aborted.[/yellow]")
                 return 0
@@ -212,16 +218,21 @@ def cmd_install(dry_run: bool = False, yes: bool = False, verbose: bool = False)
 
         if not dry_run:
             console.print(
-                "[dim]Tip:[/dim] Run [bold]firefox[/bold] from terminal or find it in your app menu."
+                "\n[dim]Tip:[/dim] Run [bold]firefox[/bold] from terminal or "
+                "find it in your app menu."
             )
             console.print(
-                "[dim]Note:[/dim] This Firefox updates itself automatically. Run this tool again when you want the latest build.\n"
+                "[dim]Note:[/dim] This Firefox updates itself automatically. "
+                "Run this tool again when you want the latest build.\n"
             )
         return 0
 
     except PermissionError:
         console.print("\n[red]Need root privileges. Try:[/red]")
-        console.print("  [bold]sudo firefox-rebuild install[/bold] (or [bold]sudo ./install.sh[/bold])")
+        console.print(
+            "  [bold]sudo firefox-rebuild install[/bold] "
+            "(or [bold]sudo ./install.sh[/bold])"
+        )
         return 1
     except Exception as e:
         if not dry_run:
